@@ -2,10 +2,10 @@
 #      Main Configs       #
 # ----------------------- #
 
-url: http://yoursite.com
-title: My Octopress Blog
-subtitle: A blogging framework for hackers.
-author: Your Name
+url: http://xiaoxiaoming.github.io
+title: 小明札记
+subtitle: 工作 游戏 领域驱动.
+author: 小小明
 simple_search: http://google.com/search
 description:
 
@@ -70,7 +70,7 @@ github_skip_forks: true
 
 # Twitter
 twitter_user:
-twitter_tweet_button: true
+twitter_tweet_button: false
 
 # Google +1
 google_plus_one: false
@@ -98,3 +98,8 @@ google_analytics_tracking_id:
 
 # Facebook Like
 facebook_like: false
+
+
+# duoshuo comments
+duoshuo_comments: true
+duoshuo_short_name: xiaoxiaoming
