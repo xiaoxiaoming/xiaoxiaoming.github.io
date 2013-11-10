@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[小明札记]]></title>
+  <title><![CDATA[小小明札记]]></title>
   <link href="http://xiaoxiaoming.github.io/atom.xml" rel="self"/>
   <link href="http://xiaoxiaoming.github.io/"/>
-  <updated>2013-11-10T15:45:57+08:00</updated>
+  <updated>2013-11-10T21:05:58+08:00</updated>
   <id>http://xiaoxiaoming.github.io/</id>
   <author>
     <name><![CDATA[小小明]]></name>
