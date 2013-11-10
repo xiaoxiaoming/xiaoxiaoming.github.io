@@ -7,8 +7,7 @@
 	<meta name="author" content="小小明">
 
 	
-	<meta name="description" content="相比各种model，领域模型是充血，有各种职责。一般的解决方式有： 利用Spring容器，将Component注入到模型
-利用语言的mixin特性，在运行期混Component。 这两种方式都能解决问题，但是存在几个问题。 需要依赖部件，才能对Model进行测试，如果逻辑依赖Dao， &hellip;">
+	<meta name="description" content="前一篇文章提到EventBus，这是领域驱动设计极其重要的一个部件。 EventBus的作用 EventBus是观察者模式升级版本。在传统的观察者模式中，观察者需要注入到[被观察者]中，才能得到通知。EventBus引入时间总线，解耦两者的依赖。 在领域驱动设计中，它解耦了模型和外围系统的依赖， &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -75,6 +74,152 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/11/10/domain-driven-design-002-eventbus/">
+		
+			领域驱动设计之EventBus</a>
+	</h2>
+	<div class="entry-content">
+		<p>前一篇文章提到EventBus，这是领域驱动设计极其重要的一个部件。</p>
+
+<h2>EventBus的作用</h2>
+
+<p>EventBus是观察者模式升级版本。在传统的观察者模式中，观察者需要注入到[被观察者]中，才能得到通知。EventBus引入时间总线，解耦两者的依赖。</p>
+
+<p>在领域驱动设计中，它解耦了模型和外围系统的依赖，让外围系统只关心数据，而不用关心数据从何而来，降低外围部件的测试难度。换个说法来说就是：两者的依赖程度从是从[接口依赖]降低到[数据依赖]。</p>
+
+<p>与此同时，使得Dommain更关心业务逻辑的处理，而这部分运算都是在内存完成的，效率极高。由于运算发生在内存中，可测试性高。</p>
+
+<p>说了这么多，到EventBus是如何实现?</p>
+
+<h2>EventBus的选择</h2>
+
+<p>经过一系列选型，最终选择Google EventBus。</p>
+
+<p>一方面是因为他的编程模型简单，另一方面经过Google长时间的验证。以网络上一个例子(简化版)来分析一下</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">EventListener</span> <span class="o">{</span>
+</span><span class='line'>    <span class="nd">@Subscribe</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">listen</span><span class="o">(</span><span class="n">OurTestEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">OurTestEvent</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="nf">OurTestEvent</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Tester</span><span class="o">{</span>
+</span><span class='line'>    <span class="nd">@Test</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">shouldReceiveEvent</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">EventBus</span> <span class="n">eventBus</span> <span class="o">=</span> <span class="k">new</span> <span class="n">EventBus</span><span class="o">(</span><span class="s">&quot;test&quot;</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">EventListener</span> <span class="n">listener</span> <span class="o">=</span> <span class="k">new</span> <span class="n">EventListener</span><span class="o">();</span>
+</span><span class='line'>        <span class="n">eventBus</span><span class="o">.</span><span class="na">register</span><span class="o">(</span><span class="n">listener</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">eventBus</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="k">new</span> <span class="n">OurTestEvent</span><span class="o">());</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>只要给相应的方法，加上@Subscribe注解，并将需要监听的事件声明为传入参数，一个监听器就完成了。</li>
+<li>对事件没有特殊要求，只要是JavaBean就行。</li>
+<li>EventBus的运行也极其简单，3行代码就可以搞定。</li>
+</ul>
+
+
+<h2>EventBus的集成</h2>
+
+<p>万里长征还剩一步：不仅将EventBus集成到项目，还必须开发者察觉不到EventBus的存在，只需要关心事件发布(EventPublish)和事件处理(EventHandler)。</p>
+
+<p>集成的思路：</p>
+
+<ul>
+<li>自定注解SpringSubscribes，作用于类。表示此类下含有GoogleEventBus的监听器。</li>
+<li>利用Spring容器的getBeansWithAnnotation函获取包含SpringSubscribes的注解的bean</li>
+</ul>
+
+
+<p>最终的集成代码如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>    <span class="n">EventBus</span> <span class="n">bus</span><span class="o">=</span> <span class="n">applicationContext</span><span class="o">.</span><span class="na">getBean</span><span class="o">(</span><span class="n">GoogleEventBus</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">objs</span> <span class="o">=</span> <span class="n">applicationContext</span>
+</span><span class='line'>          <span class="o">.</span><span class="na">getBeansWithAnnotation</span><span class="o">(</span><span class="n">GoogleSubscriber</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">objs</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">objs</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">for</span> <span class="o">(</span><span class="n">Object</span> <span class="n">obj</span> <span class="o">:</span> <span class="n">objs</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>          <span class="n">bus</span><span class="o">.</span><span class="na">register</span><span class="o">(</span><span class="n">obj</span><span class="o">);</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>将这段代码放到前几篇提到的AggregateRoot类中。然后再AggregateRoot的raised函数内加上如下代码，即可让领域对象发出各种事件。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">bus</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>总结</h2>
+
+<p>虽然这个版本EventBus比较简单，仅能满足目前项目的要求，但是更重要是利用EventBus启发新的思路。这种思路在前端和后台的框架中已经得到体现，如AnguarJs，Jetty,Akka,NodeJs，Akka。
+最后，希望和你一起交流，擦出更多火化。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-10T15:43:00+08:00" pubdate data-updated="true">Nov 10<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+</div>
+	
+</div>
+</article>
 
 
     <article class="post">
