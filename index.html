@@ -24,16 +24,16 @@
 <body>
 	<header id="header" class="inner"><h1><a href="/">小小明札记</a></h1>
 <nav id="main-nav"><ul class="main">
-	<li><a href="/">Blog</a></li>
-	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/">首页</a></li>
+	<li><a href="/blog/archives">归档</a></li>
 </ul>
 </nav>
 <nav id="mobile-nav">
 	<div class="alignleft menu">
 		<a class="button">Menu</a>
 		<div class="container"><ul class="main">
-	<li><a href="/">Blog</a></li>
-	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/">首页</a></li>
+	<li><a href="/blog/archives">归档</a></li>
 </ul>
 </div>
 	</div>
@@ -96,107 +96,9 @@
 
 <p>说了这么多，到EventBus是如何实现?</p>
 
-<h2>EventBus的选择</h2>
-
-<p>经过一系列选型，最终选择Google EventBus。</p>
-
-<p>一方面是因为他的编程模型简单，另一方面经过Google长时间的验证。以网络上一个例子(简化版)来分析一下</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">EventListener</span> <span class="o">{</span>
-</span><span class='line'>    <span class="nd">@Subscribe</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">listen</span><span class="o">(</span><span class="n">OurTestEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">OurTestEvent</span> <span class="o">{</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="nf">OurTestEvent</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Tester</span><span class="o">{</span>
-</span><span class='line'>    <span class="nd">@Test</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">shouldReceiveEvent</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">EventBus</span> <span class="n">eventBus</span> <span class="o">=</span> <span class="k">new</span> <span class="n">EventBus</span><span class="o">(</span><span class="s">&quot;test&quot;</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">EventListener</span> <span class="n">listener</span> <span class="o">=</span> <span class="k">new</span> <span class="n">EventListener</span><span class="o">();</span>
-</span><span class='line'>        <span class="n">eventBus</span><span class="o">.</span><span class="na">register</span><span class="o">(</span><span class="n">listener</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">eventBus</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="k">new</span> <span class="n">OurTestEvent</span><span class="o">());</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>只要给相应的方法，加上@Subscribe注解，并将需要监听的事件声明为传入参数，一个监听器就完成了。</li>
-<li>对事件没有特殊要求，只要是JavaBean就行。</li>
-<li>EventBus的运行也极其简单，3行代码就可以搞定。</li>
-</ul>
-
-
-<h2>EventBus的集成</h2>
-
-<p>万里长征还剩一步：不仅将EventBus集成到项目，还必须开发者察觉不到EventBus的存在，只需要关心事件发布(EventPublish)和事件处理(EventHandler)。</p>
-
-<p>集成的思路：</p>
-
-<ul>
-<li>自定注解SpringSubscribes，作用于类。表示此类下含有GoogleEventBus的监听器。</li>
-<li>利用Spring容器的getBeansWithAnnotation函获取包含SpringSubscribes的注解的bean</li>
-</ul>
-
-
-<p>最终的集成代码如下：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>    <span class="n">EventBus</span> <span class="n">bus</span><span class="o">=</span> <span class="n">applicationContext</span><span class="o">.</span><span class="na">getBean</span><span class="o">(</span><span class="n">GoogleEventBus</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
-</span><span class='line'>  <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">objs</span> <span class="o">=</span> <span class="n">applicationContext</span>
-</span><span class='line'>          <span class="o">.</span><span class="na">getBeansWithAnnotation</span><span class="o">(</span><span class="n">GoogleSubscriber</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
-</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">objs</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">objs</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
-</span><span class='line'>      <span class="k">for</span> <span class="o">(</span><span class="n">Object</span> <span class="n">obj</span> <span class="o">:</span> <span class="n">objs</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
-</span><span class='line'>          <span class="n">bus</span><span class="o">.</span><span class="na">register</span><span class="o">(</span><span class="n">obj</span><span class="o">);</span>
-</span><span class='line'>      <span class="o">}</span>
-</span><span class='line'>  <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>将这段代码放到前几篇提到的AggregateRoot类中。然后再AggregateRoot的raised函数内加上如下代码，即可让领域对象发出各种事件。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">bus</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>总结</h2>
-
-<p>虽然这个版本EventBus比较简单，仅能满足目前项目的要求，但是更重要是利用EventBus启发新的思路。这种思路在前端和后台的框架中已经得到体现，如AnguarJs，Jetty,Akka,NodeJs，Akka。
-最后，希望和你一起交流，擦出更多火化。</p>
 
 		
-		
+		<a href="/blog/2013/11/10/domain-driven-design-002-eventbus/" class="more-link">阅读全文&rarr;</a>
 	</div>
 
 
@@ -243,116 +145,14 @@
 <ul>
 <li>需要依赖部件，才能对Model进行测试，如果逻辑依赖Dao，那必须为mock或者stub。</li>
 <li>越是复杂的逻辑，越难改动。</li>
-<li></li>
 </ul>
 
 
 <p>从从另外一个角度来看，要接上述问题，需要对模型的边界进行划分，如图所示</p>
 
-<pre>
-
-                --------------------------
-                |           DB            |
-                |    -----------------    |
-                |    |    EventBus   |    |
-                |    |    -------    |    |
-                |Mail|    |Domain|   | MQ |
-                |    |    --------   |    |
-                |    |    EventBus   |    |
-                |    -----------------    |
-                |         Cache           |
-                --------------------------
-</pre>
-
-
-<p>最核心的中间的领域模型，接受外界输入的各种命令，以及相关数据，经过一系列逻辑处理后，讲变化的结果，以事件的形式，通过EventBus，通知给外围。</p>
-
-<p>具体的实践如下：</p>
-
-<p>1、定义Domian的抽象类AggregateRoot，解决Domain与外围的通讯，Domain与内部的通讯。</p>
-
-<p>为此，定义了两个函数：
-public void raised(DomainEvent<T> e);
-public void handleThis(DomainEvent<T> e);</p>
-
-<p>raised函数作用就是讲事件通知给依赖的部件。
-handleThis是个特殊函数，它会将领域事件通知给Domain模型，为什么会有此设置，目前是为了能通过过事件追朔模型的状态。</p>
-
-<p>。。另外需要依赖：
- * EventBus
- * EventStore
- * EventCache
- * ClassCache</p>
-
-<p>EventBus：  讲事件通过外围，执行方式为同步，目的是保证事务的一致性。
-EventStore：将发布的事件存储到其他介质中，比如db，file，logback。
-EventCache：讲Domain最新状态写到缓存中，以便下次获取，提高性能
-ClassCache：Domian发出的Event后，会以反射的形式找到对应的handle函数，利用ClassCache保存class对象，提高性能</p>
-
-<p>根据实际情况，</p>
-
-<p>2、定义一个Domian类，实现其逻辑，如</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Account</span> <span class="kd">extends</span> <span class="n">AggregateRoot</span><span class="o">{</span>
-</span><span class='line'>    <span class="kd">private</span> <span class="n">Long</span> <span class="n">id</span><span class="o">;</span>
-</span><span class='line'>    <span class="kd">private</span> <span class="n">Long</span> <span class="n">loginCount</span> <span class="o">=</span><span class="mi">0</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="nf">Account</span><span class="o">(</span><span class="n">Long</span> <span class="n">id</span><span class="o">){</span>
-</span><span class='line'>        <span class="k">this</span><span class="o">.</span><span class="na">raised</span><span class="o">(</span><span class="k">new</span> <span class="n">AccountCreatedEvent</span><span class="o">(</span><span class="n">uid</span><span class="o">));</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">handle</span><span class="o">(</span><span class="n">AccountCreatedEvent</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>        <span class="c1">//this.id = e.getid();</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">login</span><span class="o">(){</span>
-</span><span class='line'>        <span class="k">this</span><span class="o">.</span><span class="na">raised</span><span class="o">(</span><span class="k">new</span> <span class="n">AccountLoginEvent</span><span class="o">(</span><span class="n">uid</span><span class="o">));</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">handle</span><span class="o">(</span><span class="n">AccountLoginEvent</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>        <span class="n">loginCount</span><span class="o">++;</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>3、调用领域模型，</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="c1">//创建一个用户</span>
-</span><span class='line'>  <span class="k">new</span> <span class="nf">Account</span><span class="o">(</span><span class="mi">1L</span><span class="o">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>利用此方式，就可创建一个Account对象，并保存到数据库中。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="c1">//创建一个用户,并登陆</span>
-</span><span class='line'>  <span class="k">new</span> <span class="nf">Account</span><span class="o">(</span><span class="mi">1L</span><span class="o">).</span><span class="na">login</span><span class="o">();</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>利用此方式，就可创建一个Account对象，并统计其登陆次数。</p>
-
-<p>就先说到这里。
-在接下来的几篇，对针EventBus，EventStore，EventCache等特性进行讲解。</p>
 
 		
-		
+		<a href="/blog/2013/11/10/domain-driven-design-001-model/" class="more-link">阅读全文&rarr;</a>
 	</div>
 
 
@@ -397,107 +197,9 @@ ClassCache：Domian发出的Event后，会以反射的形式找到对应的handl
 
 <p>从技术的角度上来看:</p>
 
-<ul>
-<li>akka实例占用内存极少，在一台机器上可创建百万数量级的actor实例。</li>
-<li>akka能够充分利用多核cpu的能量，提高机器的效率</li>
-<li>akka的消息模型是单向有序的，可以解决客户端与服务器发包乱序的问题。</li>
-</ul>
-
-
-<p>对于java游戏服务器中，都会选择个一个io框架，或者是mina，或者是netty。但不管如何，其核心模式
-（主线程+工作线程），主线程负责监听来自客户端请求，创建socket；工作线程负责业务处理。akka的引入，将会替代工作线程，进行业务处理。</p>
-
-<p>在实际情况中，决定使用mina+akka来实现这个思路，为此需要解决如下问题：</p>
-
-<ul>
-<li>如何替代工作线程</li>
-<li>如何创建akka，销毁akka实例。</li>
-<li></li>
-</ul>
-
-
-<p>解决的入口是Mina的IoHandlerAdapter类，通过此类，可以创建实例，销毁，调用akka实例。</p>
-
-<p>步骤如下：</p>
-
-<ul>
-<li>创建AkkaIoActor接口，替代IoHandlerAdapter.messageReceieved函数</li>
-<li>创建AkkaIoActorImpl，将逻辑处理转移给akka。</li>
-<li>创建AkkaIoActorFactory，负责创建、销毁AkkaIoActor实例。</li>
-<li>在IoHandlerAdapter类，集成AkkaIoActor。</li>
-<li><p>相关的假代码如下：</p></li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AkkaIoHandler</span> <span class="kd">extends</span> <span class="n">IoHandlerAdapter</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">//使用Spring注入各种资源</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="kd">public</span> <span class="nf">AkkaIoHandler</span><span class="o">(){</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">sessionOpened</span><span class="o">(</span><span class="n">IoSession</span> <span class="n">ioSession</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-</span><span class='line'>        <span class="c1">//用AkkaIoAcotrFactory创建Akka实例</span>
-</span><span class='line'>        <span class="c1">//讲akka实例与ioSession关联</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">messageReceived</span><span class="o">(</span><span class="n">IoSession</span> <span class="n">ioSession</span><span class="o">,</span> <span class="n">Object</span> <span class="n">message</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-</span><span class='line'>      <span class="c1">//找到对应akka实例</span>
-</span><span class='line'>        <span class="c1">//调用akka进行逻辑处理</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>  
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">exceptionCaught</span><span class="o">(</span><span class="n">IoSession</span> <span class="n">session</span><span class="o">,</span> <span class="n">Throwable</span> <span class="n">cause</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-</span><span class='line'>      <span class="c1">//销毁akka实例，并与session解除关联</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">sessionClosed</span><span class="o">(</span><span class="n">IoSession</span> <span class="n">ioSession</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-</span><span class='line'>        <span class="c1">//销毁akka实例，并与session解除关联</span>
-</span><span class='line'>  <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>整体思路大概就是这样。相关的性能测试数据后续再补充。</p>
 
 		
-		
+		<a href="/blog/2013/11/08/akka-with-mina-in-game-server/" class="more-link">阅读全文&rarr;</a>
 	</div>
 
 
@@ -537,54 +239,9 @@ ClassCache：Domian发出的Event后，会以反射的形式找到对应的handl
 
 <p>这两种方式只是从不同的角度来观察问题，但是都要解决2个问题：</p>
 
-<ul>
-<li>距离下一次行动还有多久？，</li>
-<li>如果要加速，该怎么处理？</li>
-</ul>
-
-
-<p>对于第一种方式:</p>
-
-<pre>
-
-                |---------------------------------------------------| 
-                                     Interval
-
-        --------|---------------------------------------------------|-----
-           PrevActTime                                           Current
-</pre>
-
-
-<p>如图所示，第一个行表示周期，第二行表示上一次行动时间和当前时间。</p>
-
-<ul>
-<li><p>距离下一次时间的公式为：(Interval)&ndash;(Current-PreActTime)</p></li>
-<li><p>加速的处理方式为：PrevActTime设置为：Current-Interval</p></li>
-</ul>
-
-
-<p>对于第二种方式：</p>
-
-<pre>
-
-                |---------------------------------------------------| 
-                                     Interval
-
-        ----------------------------|-------------------------------|--
-                                 current                       nextActTime
-</pre>
-
-
-<p>如图所示，第一个行表示周期，第二行表示当前时间行动时间和下一次的行动时间。</p>
-
-<ul>
-<li>距离下一次时间的公式为：NextActTime &ndash; current;</li>
-<li>加速的处理方式为：NextTime设置为：Current</li>
-</ul>
-
 
 		
-		
+		<a href="/blog/2013/11/06/count-down-prev-next-act-time/" class="more-link">阅读全文&rarr;</a>
 	</div>
 
 
@@ -626,51 +283,9 @@ ClassCache：Domian发出的Event后，会以反射的形式找到对应的handl
 
 <p>在漫无头绪的情况下，决定休息一个晚上，第二天在定位。</p>
 
-<p>决定还是从路径抓起，在项目打印一些特殊信息，来观察一下logback的相关配置信息。在相关的启动类中，加入了如下代码：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">LoggerContext</span> <span class="n">lc</span> <span class="o">=</span> <span class="o">(</span><span class="n">LoggerContext</span><span class="o">)</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getILoggerFactory</span><span class="o">();</span>
-</span><span class='line'><span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">lc</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>在本机的windows环境中，此代码通过。上传到服务器并启动，控制台输出了如下日志：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Exception</span> <span class="n">in</span> <span class="n">thread</span> <span class="s">&quot;main&quot;</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">ClassCastException</span><span class="o">:</span> <span class="n">org</span><span class="o">.</span><span class="na">slf4j</span><span class="o">.</span><span class="na">impl</span><span class="o">.</span><span class="na">Log4jLoggerFactory</span> <span class="n">cannot</span> <span class="n">be</span> <span class="n">cast</span> <span class="n">to</span> <span class="n">ch</span><span class="o">.</span><span class="na">qos</span><span class="o">.</span><span class="na">logback</span><span class="o">.</span><span class="na">classic</span><span class="o">.</span><span class="na">LoggerContext</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这是我想到，此工程用的是logback作为日志输出工具，为什么会有log4j？</p>
-
-<p>与此同时，控制台也出现如下几行日志：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nl">SLF4J:</span> <span class="n">Class</span> <span class="n">path</span> <span class="n">contains</span> <span class="n">multiple</span> <span class="n">SLF4J</span> <span class="n">bindings</span><span class="o">.</span>
-</span><span class='line'><span class="nl">SLF4J:</span> <span class="n">Found</span> <span class="n">binding</span> <span class="n">in</span> <span class="o">[</span><span class="nl">jar:file:</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">battle</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">slf4j</span><span class="o">-</span><span class="n">log4j12</span><span class="o">-</span><span class="mf">1.6</span><span class="o">.</span><span class="mi">1</span><span class="o">.</span><span class="na">jar</span><span class="o">!/</span><span class="n">org</span><span class="o">/</span><span class="n">slf4j</span><span class="o">/</span><span class="n">impl</span><span class="o">/</span><span class="n">StaticLoggerBinder</span><span class="o">.</span><span class="na">class</span><span class="o">]</span>
-</span><span class='line'><span class="nl">SLF4J:</span> <span class="n">Found</span> <span class="n">binding</span> <span class="n">in</span> <span class="o">[</span><span class="nl">jar:file:</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">battle</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">logback</span><span class="o">-</span><span class="n">classic</span><span class="o">-</span><span class="mf">1.0</span><span class="o">.</span><span class="mi">13</span><span class="o">.</span><span class="na">jar</span><span class="o">!/</span><span class="n">org</span><span class="o">/</span><span class="n">slf4j</span><span class="o">/</span><span class="n">impl</span><span class="o">/</span><span class="n">StaticLoggerBinder</span><span class="o">.</span><span class="na">class</span><span class="o">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>为此怀疑是log4j与logback并存的问题。</p>
-
-<p>立即修改pom.xml，增加log4j-over-slf4j.jar，删除log4j的配置信息。重新部署工程后，日志文件就就出现了。</p>
-
-<p>究其原因，是log4j与logback并存导致无日志文件输出。在服务器上，程序优先加载log4j，但是没有为之包含相应的配置文件，导致日志文件没有创建。</p>
-
-<p>经过此战，也收获不少心得：</p>
-
-<ul>
-<li>关注告警信息，它是问题的突破口</li>
-<li>一个工程内，尽量只使用一种日志打印框架</li>
-</ul>
-
 
 		
-		
+		<a href="/blog/2013/11/02/log4j-logback-conflict-no-log-file/" class="more-link">阅读全文&rarr;</a>
 	</div>
 
 
@@ -714,287 +329,11 @@ mavnconf
 </pre>
 
 
-<p><strong>步骤一</strong>：创建一个maven工程，其名为mavnconf，并在main目录下，增加resources、scripts和assembly目录。</p>
-
-<pre>
-mavnconf
-├─src
-│  ├─main
-│  │  ├─java 
-│  │  ├─assembly
-│  │  ├─resources
-│  │  └─scripts
-</pre>
 
 
-<p><strong>步骤二</strong>：添加启动脚本。</p>
-
-<p>在scripts目录创建run.sh文件，内容如下：</p>
-
-<pre>
-java -Djava.ext.dirs="../lib" -server -jar "../lib/mavnconf-1.0-SNAPSHOT.jar"</pre>
-
-
-<p>在scripts目录创建run.bat文件，内容如下</p>
-
-<pre>
-java -Djava.ext.dirs="..\lib" -server -jar ..\lib\mavnconf-1.0-SNAPSHOT.jar
-</pre>
-
-
-<p><strong>步骤三</strong>：给pom.xml添加maven-jar-plugin，内容如下：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'>    <span class="nt">&lt;plugin&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;groupId&gt;</span>org.apache.maven.plugins<span class="nt">&lt;/groupId&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;artifactId&gt;</span>maven-jar-plugin<span class="nt">&lt;/artifactId&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;version&gt;</span>2.3.2<span class="nt">&lt;/version&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;configuration&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;archive&gt;</span>
-</span><span class='line'>                <span class="nt">&lt;manifest&gt;</span>
-</span><span class='line'>                    <span class="nt">&lt;addClasspath&gt;</span>true<span class="nt">&lt;/addClasspath&gt;</span>
-</span><span class='line'>                    <span class="nt">&lt;classpathPrefix&gt;</span>lib/<span class="nt">&lt;/classpathPrefix&gt;</span>
-</span><span class='line'>                    <span class="nt">&lt;mainClass&gt;</span>mavnconf.App<span class="nt">&lt;/mainClass&gt;</span>
-</span><span class='line'>                <span class="nt">&lt;/manifest&gt;</span>
-</span><span class='line'>                <span class="nt">&lt;manifestEntries&gt;</span>
-</span><span class='line'>                    <span class="nt">&lt;Class-Path&gt;</span>./../conf/<span class="nt">&lt;/Class-Path&gt;</span>
-</span><span class='line'>                <span class="nt">&lt;/manifestEntries&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;/archive&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;/configuration&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;/plugin&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>关键点说明:</p>
-
-<ul>
-<li>mainfiest.addClasspath：是否添加类路径</li>
-<li>mainfiest.classpathPrefix：库路径的前缀,通过配置<strong>lib/</strong>，jar包可以读app/lib/目录下的类库。</li>
-<li>mainfiest.mainClass:可执行jar包的入口类</li>
-<li>mainfiest.manifestEntries.Class-Path:自定义一个类路径，在本工程中设为./../conf/。.代表jar所在的目录，即为lib目录。./../代表jar包所在目录的父目录，即为app。./../conf/代表外部配置文件所在的目录,与lib目录同级。</li>
-</ul>
-
-
-<p><strong>步骤四</strong>，添加 maven-assembly-plugin，使得maven组装出需要的工程结构:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'>      <span class="nt">&lt;plugin&gt;</span>
-</span><span class='line'>          <span class="nt">&lt;artifactId&gt;</span>maven-assembly-plugin<span class="nt">&lt;/artifactId&gt;</span>
-</span><span class='line'>          <span class="nt">&lt;version&gt;</span>2.3<span class="nt">&lt;/version&gt;</span>
-</span><span class='line'>          <span class="nt">&lt;configuration&gt;</span>
-</span><span class='line'>              <span class="nt">&lt;descriptors&gt;</span>
-</span><span class='line'>                  <span class="nt">&lt;descriptor&gt;</span>
-</span><span class='line'>                      src/main/assembly/assembly.xml
-</span><span class='line'>                  <span class="nt">&lt;/descriptor&gt;</span>
-</span><span class='line'>              <span class="nt">&lt;/descriptors&gt;</span>
-</span><span class='line'>                <span class="nt">&lt;finalName&gt;</span>mavnconf<span class="nt">&lt;/finalName&gt;</span>
-</span><span class='line'>          <span class="nt">&lt;/configuration&gt;</span>
-</span><span class='line'>          <span class="nt">&lt;executions&gt;</span>
-</span><span class='line'>              <span class="nt">&lt;execution&gt;</span>
-</span><span class='line'>                  <span class="nt">&lt;phase&gt;</span>package<span class="nt">&lt;/phase&gt;</span>
-</span><span class='line'>                  <span class="nt">&lt;goals&gt;</span>
-</span><span class='line'>                      <span class="nt">&lt;goal&gt;</span>assembly<span class="nt">&lt;/goal&gt;</span>
-</span><span class='line'>                  <span class="nt">&lt;/goals&gt;</span>
-</span><span class='line'>              <span class="nt">&lt;/execution&gt;</span>
-</span><span class='line'>          <span class="nt">&lt;/executions&gt;</span>
-</span><span class='line'>      <span class="nt">&lt;/plugin&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这里最关键的引入assembly.xml文件，在它的帮助下，可以打包需要的目录结构
-assembly.xml的内容如下</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;id&gt;</span>release<span class="nt">&lt;/id&gt;</span>
-</span><span class='line'><span class="nt">&lt;formats&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;format&gt;</span>tar.gz<span class="nt">&lt;/format&gt;</span>  <span class="c">&lt;!-- 其他可选格式 gzip/zip/tar.gz/ --&gt;</span>
-</span><span class='line'><span class="nt">&lt;/formats&gt;</span>
-</span><span class='line'><span class="nt">&lt;includeBaseDirectory&gt;</span>false<span class="nt">&lt;/includeBaseDirectory&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>此配置的含义是：将打包成名为mavnconf-release.tar.gz的压缩包。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;dependencySets&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;dependencySet&gt;</span>
-</span><span class='line'>        <span class="c">&lt;!--最终打包至输出包内的lib路径下--&gt;</span>
-</span><span class='line'>      <span class="nt">&lt;outputDirectory&gt;</span>/lib<span class="nt">&lt;/outputDirectory&gt;</span>
-</span><span class='line'>        <span class="c">&lt;!--将项目本身生成的构件也包含在内--&gt;</span>
-</span><span class='line'>      <span class="nt">&lt;useProjectArtifact&gt;</span>true<span class="nt">&lt;/useProjectArtifact&gt;</span>
-</span><span class='line'>      <span class="nt">&lt;unpack&gt;</span>false<span class="nt">&lt;/unpack&gt;</span>
-</span><span class='line'>      <span class="nt">&lt;scope&gt;</span>runtime<span class="nt">&lt;/scope&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;/dependencySet&gt;</span>
-</span><span class='line'><span class="nt">&lt;/dependencySets&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>此配置的含义是，将 工程文件打包成jar包，并和依赖的类库，复制到lib目录下</p>
-
-<p>关键要点说明：</p>
-
-<ul>
-<li><p>dependencySet.outputDirectory为输出目录。</p></li>
-<li><p>dependencySet.useProjectArtifact：是否使用本工程代码和资源来构建构建，这里必须为true，否在在lib目录，无法找到mavnconf-1.0-SNAPSHOT构件。</p></li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;fileSets&gt;</span>
-</span><span class='line'>      <span class="nt">&lt;fileSet&gt;</span>
-</span><span class='line'>          <span class="nt">&lt;directory&gt;</span>src/main/scripts<span class="nt">&lt;/directory&gt;</span>
-</span><span class='line'>          <span class="nt">&lt;outputDirectory&gt;</span>/bin<span class="nt">&lt;/outputDirectory&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;fileMode&gt;</span>0755<span class="nt">&lt;/fileMode&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;directoryMode&gt;</span>0755<span class="nt">&lt;/directoryMode&gt;</span>
-</span><span class='line'>
-</span><span class='line'>      <span class="nt">&lt;/fileSet&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;fileSet&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;directory&gt;</span>target/classes/config/properties/<span class="nt">&lt;/directory&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;outputDirectory&gt;</span>/conf<span class="nt">&lt;/outputDirectory&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;includes&gt;</span>
-</span><span class='line'>                <span class="nt">&lt;include&gt;</span>**.properties<span class="nt">&lt;/include&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;/includes&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;/fileSet&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;/fileSets&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>
-第一个fileSet目录是将run.sh文件复制到bin目录</p>
-
-<p>第二个fileSet的目录是将以来的properties文件复制到app/conf目录下</p>
-
-<p>要点说明：</p>
-
-<ul>
-<li>run.sh是可执行文件，在linux中它必须是可执行的，所以权限为0755</li>
-</ul>
-
-
-<p><strong>步骤五:</strong>写个例子来验证效果</p>
-
-<p>在resources目录下，创建文件夹properties,并加入文件app.properties，内容如下</p>
-
-<pre>
-app.test="app.test"
-</pre>
-
-
-<p>在src/main/mavnconf目录下创建App.class，内容如下:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">App</span>
-</span><span class='line'><span class="o">{</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span> <span class="n">String</span><span class="o">[]</span> <span class="n">args</span> <span class="o">)</span><span class="kd">throws</span> <span class="n">Exception</span>
-</span><span class='line'>    <span class="o">{</span>
-</span><span class='line'>        <span class="n">Properties</span> <span class="n">p</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Properties</span><span class="o">();</span>
-</span><span class='line'>        <span class="n">p</span><span class="o">.</span><span class="na">load</span><span class="o">(</span><span class="n">getInputStream</span><span class="o">());</span>
-</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;app.test&quot;</span><span class="o">));</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">public</span> <span class="kd">static</span> <span class="n">InputStream</span> <span class="nf">getInputStream</span><span class="o">(){</span>
-</span><span class='line'>      <span class="n">InputStream</span> <span class="n">input</span><span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">().</span><span class="na">getResourceAsStream</span><span class="o">(</span><span class="s">&quot;app.properties&quot;</span><span class="o">);</span>
-</span><span class='line'>        <span class="k">if</span><span class="o">(</span><span class="n">input</span> <span class="o">==</span> <span class="kc">null</span><span class="o">){</span>
-</span><span class='line'>         <span class="n">input</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">().</span><span class="na">getResourceAsStream</span><span class="o">(</span><span class="s">&quot;./properties/app.properties&quot;</span><span class="o">);</span>
-</span><span class='line'>      <span class="o">};</span>
-</span><span class='line'>      <span class="k">return</span> <span class="n">input</span><span class="o">;</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>验证方式如下:</p>
-
-<ul>
-<li>使用maven编译工程，在target目录下找到mavenconf-release.tar.gz压缩包,并解压文件。</li>
-<li>win+r，输入cmd回车，弹出shell窗口，进入对应的bin目录，执行run.bat</li>
-<li>修改conf目录下app.properties内容，再次执行run.bat</li>
-</ul>
-
-
-<h1>附件，稍等一段时间&hellip;</h1>
 
 		
-		
+		<a href="/blog/2013/10/20/maven-execute-java-project/" class="more-link">阅读全文&rarr;</a>
 	</div>
 
 

@@ -4,7 +4,7 @@
   <title><![CDATA[小小明札记]]></title>
   <link href="http://xiaoxiaoming.github.io/atom.xml" rel="self"/>
   <link href="http://xiaoxiaoming.github.io/"/>
-  <updated>2013-11-10T21:05:58+08:00</updated>
+  <updated>2013-11-13T20:59:26+08:00</updated>
   <id>http://xiaoxiaoming.github.io/</id>
   <author>
     <name><![CDATA[小小明]]></name>
@@ -29,6 +29,9 @@
 <p>与此同时，使得Dommain更关心业务逻辑的处理，而这部分运算都是在内存完成的，效率极高。由于运算发生在内存中，可测试性高。</p>
 
 <p>说了这么多，到EventBus是如何实现?</p>
+
+<!--more-->
+
 
 <h2>EventBus的选择</h2>
 
@@ -149,11 +152,13 @@
 <ul>
 <li>需要依赖部件，才能对Model进行测试，如果逻辑依赖Dao，那必须为mock或者stub。</li>
 <li>越是复杂的逻辑，越难改动。</li>
-<li></li>
 </ul>
 
 
 <p>从从另外一个角度来看，要接上述问题，需要对模型的边界进行划分，如图所示</p>
+
+<!--more-->
+
 
 <pre>
 
@@ -275,6 +280,9 @@ ClassCache：Domian发出的Event后，会以反射的形式找到对应的handl
 
 <p>从技术的角度上来看:</p>
 
+<!--more-->
+
+
 <ul>
 <li>akka实例占用内存极少，在一台机器上可创建百万数量级的actor实例。</li>
 <li>akka能够充分利用多核cpu的能量，提高机器的效率</li>
@@ -387,6 +395,9 @@ ClassCache：Domian发出的Event后，会以反射的形式找到对应的handl
 
 <p>这两种方式只是从不同的角度来观察问题，但是都要解决2个问题：</p>
 
+<!--more-->
+
+
 <ul>
 <li>距离下一次行动还有多久？，</li>
 <li>如果要加速，该怎么处理？</li>
@@ -448,6 +459,9 @@ ClassCache：Domian发出的Event后，会以反射的形式找到对应的handl
 
 <p>在漫无头绪的情况下，决定休息一个晚上，第二天在定位。</p>
 
+<!--more-->
+
+
 <p>决定还是从路径抓起，在项目打印一些特殊信息，来观察一下logback的相关配置信息。在相关的启动类中，加入了如下代码：</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
@@ -506,6 +520,11 @@ mavnconf
 ├─conf
 └─lib
 </pre>
+
+
+
+
+<!--more-->
 
 
 <p><strong>步骤一</strong>：创建一个maven工程，其名为mavnconf，并在main目录下，增加resources、scripts和assembly目录。</p>
