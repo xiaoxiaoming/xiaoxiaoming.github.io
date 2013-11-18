@@ -7,7 +7,7 @@
 	<meta name="author" content="小小明">
 
 	
-	<meta name="description" content="前一篇文章提到EventBus，这是领域驱动设计极其重要的一个部件。 EventBus的作用 EventBus是观察者模式升级版本。在传统的观察者模式中，观察者需要注入到[被观察者]中，才能得到通知。EventBus引入时间总线，解耦两者的依赖。 在领域驱动设计中，它解耦了模型和外围系统的依赖， &hellip;">
+	<meta name="description" content="一提到查询性能，就提到缓存(Cache)。缓存的引入，降低了与周边系统的交互，减少CPU等待时间，从而提高了效率。 缓存在哪里？在远程的服务器有redis,memcache；在本地内中有Jvm,ehcache；在会话中有Session,在线程中有ThreadLocal； &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -74,6 +74,48 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/11/18/thread-cache/">
+		
+			线程缓存</a>
+	</h2>
+	<div class="entry-content">
+		<p>一提到查询性能，就提到缓存(Cache)。缓存的引入，降低了与周边系统的交互，减少CPU等待时间，从而提高了效率。</p>
+
+<p>缓存在哪里？在远程的服务器有redis,memcache；在本地内中有Jvm,ehcache；在会话中有Session,在线程中有ThreadLocal；</p>
+
+<p>今天要关注的是ThreadLocal，为什么是它，与上面的缓存比，它的生命周期最短，但是与业务逻辑却有最紧密的联系。</p>
+
+
+		
+		<a href="/blog/2013/11/18/thread-cache/" class="more-link">阅读全文&rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-18T22:04:00+08:00" pubdate data-updated="true">Nov 18<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+</div>
+	
+</div>
+</article>
 
 
     <article class="post">

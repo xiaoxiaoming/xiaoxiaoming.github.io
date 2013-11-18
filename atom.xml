@@ -4,7 +4,7 @@
   <title><![CDATA[小小明札记]]></title>
   <link href="http://xiaoxiaoming.github.io/atom.xml" rel="self"/>
   <link href="http://xiaoxiaoming.github.io/"/>
-  <updated>2013-11-13T21:00:39+08:00</updated>
+  <updated>2013-11-18T22:05:22+08:00</updated>
   <id>http://xiaoxiaoming.github.io/</id>
   <author>
     <name><![CDATA[小小明]]></name>
@@ -12,6 +12,179 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[线程缓存]]></title>
+    <link href="http://xiaoxiaoming.github.io/blog/2013/11/18/thread-cache/"/>
+    <updated>2013-11-18T22:04:00+08:00</updated>
+    <id>http://xiaoxiaoming.github.io/blog/2013/11/18/thread-cache</id>
+    <content type="html"><![CDATA[<p>一提到查询性能，就提到缓存(Cache)。缓存的引入，降低了与周边系统的交互，减少CPU等待时间，从而提高了效率。</p>
+
+<p>缓存在哪里？在远程的服务器有redis,memcache；在本地内中有Jvm,ehcache；在会话中有Session,在线程中有ThreadLocal；</p>
+
+<p>今天要关注的是ThreadLocal，为什么是它，与上面的缓存比，它的生命周期最短，但是与业务逻辑却有最紧密的联系。</p>
+
+<!--more-->
+
+
+<p>通过threadLocal，可以了解在一次请求响应中，收集到从db查询到数据，从其他系统获取到的数据；也可以把查询的数据放到ThreadLocal，下次再用时直接拿来就用，省去网络交互的时间；可以把收集到数据，进行二次分析处理；或者将收集的数据，以批量形式写到某处，提高性能，保证一致性。</p>
+
+<p>为了达到这些目的，需要定义一些东西</p>
+
+<p>接口(ThreadCollectable)，标明是可以收集的数据</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">ThreadCollectable</span> <span class="o">{</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其次找一个可以存储数据的地方,如基于Hash的收集器，ThreadHashCollector。</p>
+
+<h6>定义一个抽象类，解决ThreadCollectorSupport，解决ThreadLocal清理、创建的问题</h6>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">ThreadCollectorSupport</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class='line'><span class="kd">protected</span> <span class="kd">final</span> <span class="n">ThreadLocal</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">collector</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ThreadLocal</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;();</span>
+</span><span class='line'><span class="kd">public</span>  <span class="kt">void</span> <span class="nf">clear</span><span class="o">(){</span>
+</span><span class='line'>    <span class="n">collector</span><span class="o">.</span><span class="na">remove</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="kd">public</span> <span class="n">T</span> <span class="nf">getCollector</span><span class="o">(){</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">collector</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">putCollector</span><span class="o">(</span><span class="n">T</span> <span class="n">t</span><span class="o">){</span>
+</span><span class='line'>    <span class="n">collector</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h6>定义ThreadHashCollector</h6>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">ThreadHashCollector</span><span class="o">&lt;</span><span class="n">Key</span><span class="o">,</span><span class="n">Value</span><span class="o">&gt;</span> <span class="kd">extends</span> <span class="n">ThreadCollectorSupport</span><span class="o">&lt;</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">Key</span><span class="o">,</span><span class="n">Value</span><span class="o">&gt;&gt;{</span>
+</span><span class='line'>    <span class="kd">protected</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">Key</span><span class="o">,</span><span class="n">Value</span><span class="o">&gt;</span> <span class="n">get</span><span class="o">(){</span>
+</span><span class='line'>        <span class="n">Map</span><span class="o">&lt;</span><span class="n">Key</span><span class="o">,</span><span class="n">Value</span><span class="o">&gt;</span> <span class="n">collector</span> <span class="o">=</span><span class="n">getCollector</span><span class="o">();</span>
+</span><span class='line'>        <span class="k">if</span><span class="o">(</span><span class="n">collector</span> <span class="o">==</span> <span class="kc">null</span><span class="o">){</span>
+</span><span class='line'>            <span class="n">collector</span><span class="o">=</span> <span class="n">Maps</span><span class="o">.</span><span class="na">newConcurrentMap</span><span class="o">();</span>
+</span><span class='line'>            <span class="n">putCollector</span><span class="o">(</span><span class="n">collector</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">collector</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">add</span><span class="o">(</span><span class="n">Key</span> <span class="n">key</span><span class="o">,</span><span class="n">Value</span> <span class="n">val</span><span class="o">){</span>
+</span><span class='line'>        <span class="k">if</span><span class="o">(</span><span class="n">val</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
+</span><span class='line'>            <span class="n">get</span><span class="o">().</span><span class="na">put</span><span class="o">(</span><span class="n">key</span><span class="o">,</span><span class="n">val</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">Value</span> <span class="nf">add</span><span class="o">(</span><span class="n">Key</span> <span class="n">key</span><span class="o">){</span>
+</span><span class='line'>           <span class="k">return</span> <span class="nf">get</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>最后根据实际情况，解决项目问题，
+最后举个简单例子来说明：如讲从DB查询出来的数据，放到ThreadCache中，以便于同一个线程下的其他类使用。</p>
+
+<p>数据类：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Account</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">String</span> <span class="n">accountId</span><span class="o">;</span>
+</span><span class='line'>    <span class="c1">// getter/setter</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>缓存类：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AccountLocalCache</span> <span class="kd">extends</span> <span class="n">ThreadHashCollector</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">Account</span><span class="o">&gt;{</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kd">static</span> <span class="n">AccountLocalCache</span> <span class="n">INSTANCE</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AccountLocalCache</span><span class="o">();</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="nf">AccountLocalCache</span><span class="o">(){};</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>查询类:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AccountQueryService</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">Account</span> <span class="nf">queryAccount</span><span class="o">(</span><span class="n">String</span> <span class="n">accountId</span><span class="o">){</span>
+</span><span class='line'>        <span class="n">Account</span> <span class="n">a</span> <span class="o">=</span> <span class="n">AccountLocalCache</span><span class="o">.</span><span class="na">INSTANCE</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">accountId</span><span class="o">);</span>
+</span><span class='line'>        <span class="k">if</span><span class="o">(</span><span class="n">a</span> <span class="o">==</span> <span class="kc">null</span><span class="o">){</span>
+</span><span class='line'>            <span class="n">a</span> <span class="o">=</span> <span class="n">getFromDb</span><span class="o">(</span><span class="n">accountId</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">AccountLocalCache</span><span class="o">.</span><span class="na">INSTANCE</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">accountId</span><span class="o">,</span><span class="n">a</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">a</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">Account</span> <span class="nf">getFromDb</span><span class="o">(</span><span class="n">String</span> <span class="n">account</span><span class="o">){</span>
+</span><span class='line'>        <span class="c1">//模拟从db读</span>
+</span><span class='line'>        <span class="k">return</span> <span class="k">new</span> <span class="nf">Account</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个例子比较简单，但是适合很多场景，如：变化频繁但不共享的数据；与用户有关的数据。</p>
+
+<p>最后提下ThreadCache的弱点。</p>
+
+<ul>
+<li>无法主动释放ThreadCache中的数据，为此需要在线程结束时中主动释放数据，否则造成内存泄露的。</li>
+<li>如果需要讲ThreadLocal的数据，共享给其他线程，需要手动复制，并作清理旧数据。</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[领域驱动设计之EventBus]]></title>
