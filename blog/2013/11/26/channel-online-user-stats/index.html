@@ -1,0 +1,276 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>在线人数统计方案思路 - 小小明札记</title>
+	<meta name="author" content="小小明">
+
+	
+	<meta name="description" content="方案的目标 实时统计每个渠道的在线人数,以便于其他系统统计在线人数，绘制在线人数趋势图等等。 问题一：在线人数存到何种中间介质？ 想到的方案有：mysql和redis 选择mysql的好处是根据现有的组件，直接利用现有的人力即可完成要求，缺点是性能低下，过多的查询请求增加高db的负荷。 &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="小小明札记" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">小小明札记</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">首页</a></li>
+	<li><a href="/blog/archives">归档</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">首页</a></li>
+	<li><a href="/blog/archives">归档</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xiaoxiaoming.github.io">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="http://google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xiaoxiaoming.github.io">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">在线人数统计方案思路</h2>
+	<div class="entry-content"><h2>方案的目标</h2>
+
+<p>实时统计每个渠道的在线人数,以便于其他系统统计在线人数，绘制在线人数趋势图等等。</p>
+
+<h2>问题一：在线人数存到何种中间介质？</h2>
+
+<p>想到的方案有：mysql和redis</p>
+
+<ul>
+<li>选择mysql的好处是根据现有的组件，直接利用现有的人力即可完成要求，缺点是性能低下，过多的查询请求增加高db的负荷。</li>
+</ul>
+
+
+<!--more-->
+
+
+<ul>
+<li>选择redis的优势是读写性能高，不会冲击DB，缺点是需要引入新的组件。</li>
+</ul>
+
+
+<p>经过再三衡量，最终选择redis。读写分离是提高系统整体效率有效佳径，redis的引入可以减轻db的压力，将压力转移到缓存中；另一方面
+redis没有过多的协议包装，没有复杂多线程读写模型，具备丰富的数据结构。</p>
+
+<h2>问题二：如何设计redis的存储模型?</h2>
+
+<p>思路有两种，一种是String，另一种是hash。</p>
+
+<h3>方式一：String的思路：</h3>
+
+<p>利用String 的setbit，bitCount两个命令：</p>
+
+<ul>
+<li>渠道A的用户1上线，setBit channel:A 1 1</li>
+<li>渠道A的用户1下线，setBit channel:A 1 0</li>
+<li>统计渠道A的用户数量 bitCount channel:A</li>
+<li>统计所有渠道的用户数量  首先 keys channel*，然后使用bitCount遍历每个渠道</li>
+</ul>
+
+
+<h3>方案二：Hash的方案:利用Hash的HINCRBY,HGETALL命令</h3>
+
+<ul>
+<li>渠道A的用户1上线，HINCRBY channelCount A 1</li>
+<li>渠道A的用户1下线，HINCRBY channelCount A -1</li>
+<li>统计渠道A的用户数量 bitCount channel:A</li>
+<li>统计所有渠道的用户 HGETALL channelCount</li>
+</ul>
+
+
+<h3>方案三:利用Hash的HMSET,HGETALL命令</h3>
+
+<ul>
+<li>渠道A的用户1上线：在服务器端，计算所有的渠道的结果，汇总成Map格式，然后通过 HMSet channelCount A 1 B 2写入redis</li>
+<li>渠道A的用户1下线: 在服务器端，计算所有的渠道的结果，汇总成Map格式，然后通过 HMSet channelCount A 1 B 2写入redis</li>
+<li>统计渠道A的用户数量 bitCount channel:A</li>
+<li>统计所有渠道的用户 HGETALL channelCount</li>
+</ul>
+
+
+<p>方案的分析与选择：</p>
+
+<ul>
+<li>方案一：写模型简单，读写模型复杂，因为要对每个渠道进行遍历，不适合本场景，</li>
+<li>方案二：保持方案一的优点的同时，简化读模型，是个不错的方案，但是在实际运作中发现了一个问题，+1，-1的操作不对称，统计人数偏离太大。</li>
+<li>方案三：读模型简单，但是写模型相对复杂，但是避免+1，-1，不对称的问题。</li>
+</ul>
+
+
+<p>综合考虑，选择方案三。</p>
+
+<h2>问题三:如何在服务器端统计渠道数据?</h2>
+
+<p>传统的的方案是利用hasmMap来统计，通常方案如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="kd">public</span> <span class="kd">static</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">buildMap</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">strArr</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;();</span>
+</span><span class='line'>        <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">str</span> <span class="o">:</span> <span class="n">strArr</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">if</span> <span class="o">(</span><span class="n">map</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="n">str</span><span class="o">))</span> <span class="o">{</span>
+</span><span class='line'>                <span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">str</span><span class="o">,</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">str</span><span class="o">)</span> <span class="o">+</span> <span class="mi">1</span><span class="o">);</span>
+</span><span class='line'>            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>                <span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">str</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">map</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这种方式虽然简单，但是性能低下，因为需要对Map3次操作。再次经过优化后，也需要2次：get操作，put操作。</p>
+
+<p>与此同时google-guava提供了ActionLongMap类，解决此问题，但是它适合于多线程。</p>
+
+<p>最后又找到了另外一种方案，它适合单线程模型下，效率极高。主要是使用的操作为 get，++操作，关键要点是使用引用。具体的网址如下:
+<a href="http://www.blogjava.net/changedi/archive/2013/01/20/394460.html">http://www.blogjava.net/changedi/archive/2013/01/20/394460.html</a></p>
+
+<h2>问题四：用户的每一次登陆和退出，都要需要计算并写入到缓存吗？</h2>
+
+<p>答案是no!解决的方式是时间戳+队列</p>
+
+<p>队列避免瞬间高负载，稳定CPU占用率，其代价是内存占用提高。</p>
+
+<p>时间戳的作用是过滤无效的统计操作，特别是大量的登陆和退出操作下，比如：</p>
+
+<ul>
+<li>在10：10分和10：11分来了5000次登陆和退出，但是系统在10点10：21完成一次统计,那些在这个点之前发起的登陆和退出操作，还有必要再响应码？</li>
+</ul>
+
+
+<h2>结束语：</h2>
+
+<p>看了这个方案，你觉得如何？</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-26T22:59:00+08:00" pubdate data-updated="true">Nov 26<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+</div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+
+
+  <section>
+    <h1>Comments</h1>
+    <div id="comments" aria-live="polite"><!-- Duoshuo Comment BEGIN -->
+	<div class="ds-thread"></div>
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"xiaoxiaoming"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = 'http://static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		|| document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+<!-- Duoshuo Comment END --></div>
+  </section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    小小明
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>

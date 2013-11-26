@@ -7,7 +7,7 @@
 	<meta name="author" content="小小明">
 
 	
-	<meta name="description" content="一提到查询性能，就提到缓存(Cache)。缓存的引入，降低了与周边系统的交互，减少CPU等待时间，从而提高了效率。 缓存在哪里？在远程的服务器有redis,memcache；在本地内中有Jvm,ehcache；在会话中有Session,在线程中有ThreadLocal； &hellip;">
+	<meta name="description" content="方案的目标 实时统计每个渠道的在线人数,以便于其他系统统计在线人数，绘制在线人数趋势图等等。 问题一：在线人数存到何种中间介质？ 想到的方案有：mysql和redis 选择mysql的好处是根据现有的组件，直接利用现有的人力即可完成要求，缺点是性能低下，过多的查询请求增加高db的负荷。 阅读全文 &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -74,6 +74,55 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/11/26/channel-online-user-stats/">
+		
+			在线人数统计方案思路</a>
+	</h2>
+	<div class="entry-content">
+		<h2>方案的目标</h2>
+
+<p>实时统计每个渠道的在线人数,以便于其他系统统计在线人数，绘制在线人数趋势图等等。</p>
+
+<h2>问题一：在线人数存到何种中间介质？</h2>
+
+<p>想到的方案有：mysql和redis</p>
+
+<ul>
+<li>选择mysql的好处是根据现有的组件，直接利用现有的人力即可完成要求，缺点是性能低下，过多的查询请求增加高db的负荷。</li>
+</ul>
+
+
+
+		
+		<a href="/blog/2013/11/26/channel-online-user-stats/" class="more-link">阅读全文&rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-26T22:59:00+08:00" pubdate data-updated="true">Nov 26<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+</div>
+	
+</div>
+</article>
 
 
     <article class="post">
