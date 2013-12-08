@@ -1,0 +1,183 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>缓存实战心得 - 小小明札记</title>
+	<meta name="author" content="小小明">
+
+	
+	<meta name="description" content="判断缓存是否加载。 判断缓存是否已经加载过有两种方式：一种根据对象的标识符(Identity)，另一种根据特殊标志位(Flag)。 Identity用于单一对象，如用户基本信息(UserBaseInfo),任何服务只要使用到它，他就被加载到缓存， Flag适用于集合对象，如 用户的收货地址列表（ &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="小小明札记" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">小小明札记</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">首页</a></li>
+	<li><a href="/blog/archives">归档</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">首页</a></li>
+	<li><a href="/blog/archives">归档</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xiaoxiaoming.github.io">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="http://google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xiaoxiaoming.github.io">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">缓存实战心得</h2>
+	<div class="entry-content"><h4>判断缓存是否加载。</h4>
+
+<p>判断缓存是否已经加载过有两种方式：一种根据对象的标识符(Identity)，另一种根据特殊标志位(Flag)。</p>
+
+<p>Identity用于单一对象，如用户基本信息(UserBaseInfo),任何服务只要使用到它，他就被加载到缓存，</p>
+
+<p>Flag适用于集合对象，如 用户的收货地址列表（AddressList)，某些服务只会使用部分地址列表，而某些服务需要使用所有地址。因此判断是否AddressList是否全部加载就成为问题，Flag的引入，就可以解决此问题。</p>
+
+<!--more-->
+
+
+<h4>用户断线后，可以设置为一个失效期，但是不要马上删除。</h4>
+
+<p>移动网络中，有很多因素导致 用户掉线。如果立即将缓存删除，服务器需要在花一定时间缓存载入，用户也需要再花时间。可以设置一个5分钟的失效期，来缓冲。</p>
+
+<h4>处理结果是可以缓存的</h4>
+
+<p>可以将客户端的请求，区分为Command(命令)和Query(查询）
+客户端发出的查询请求，可以缓存个10s，以便于提高查询性能。
+客户端发出的命令请求，可以缓存个15s，防止用户意外掉线后，无法收到上次的处理结果。</p>
+
+<h4>缓存是由层次的，相互搭配，可以出奇效。</h4>
+
+<p>线程缓存(Thread),本地缓存(Local)，远程缓存(Remote)有各自的使用场景，在DB的帮助下，缓存相互配合可以将查询性能提高到一个新的层次。</p>
+
+<p>模式一：Thread+Remote+Db。存入db是保证数据安全，存入Remote是为了提高查询效率，存入Thread可以减少与缓存服务器的交互次数。如：玩家的宠物，玩家的英雄</p>
+
+<p>模式二：Thread+Remote。不需要存入DB，但是需要经常操作的数据，比如房间列表。</p>
+
+<p>模式三：Cache+Db:将从DB查询到的数据，缓存起来，减少查询量。如：积分排行榜。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-08T14:55:00+08:00" pubdate data-updated="true">Dec 8<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+</div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+
+
+  <section>
+    <h1>Comments</h1>
+    <div id="comments" aria-live="polite"><!-- Duoshuo Comment BEGIN -->
+	<div class="ds-thread"></div>
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"xiaoxiaoming"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = 'http://static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		|| document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+<!-- Duoshuo Comment END --></div>
+  </section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    小小明
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+</body>
+</html>

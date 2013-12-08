@@ -7,7 +7,7 @@
 	<meta name="author" content="小小明">
 
 	
-	<meta name="description" content="方案的目标 实时统计每个渠道的在线人数,以便于其他系统统计在线人数，绘制在线人数趋势图等等。 问题一：在线人数存到何种中间介质？ 想到的方案有：mysql和redis 选择mysql的好处是根据现有的组件，直接利用现有的人力即可完成要求，缺点是性能低下，过多的查询请求增加高db的负荷。 阅读全文 &hellip;">
+	<meta name="description" content="判断缓存是否加载。 判断缓存是否已经加载过有两种方式：一种根据对象的标识符(Identity)，另一种根据特殊标志位(Flag)。 Identity用于单一对象，如用户基本信息(UserBaseInfo),任何服务只要使用到它，他就被加载到缓存， Flag适用于集合对象，如 用户的收货地址列表（ &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -74,6 +74,50 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/12/08/cache-exp/">
+		
+			缓存实战心得</a>
+	</h2>
+	<div class="entry-content">
+		<h4>判断缓存是否加载。</h4>
+
+<p>判断缓存是否已经加载过有两种方式：一种根据对象的标识符(Identity)，另一种根据特殊标志位(Flag)。</p>
+
+<p>Identity用于单一对象，如用户基本信息(UserBaseInfo),任何服务只要使用到它，他就被加载到缓存，</p>
+
+<p>Flag适用于集合对象，如 用户的收货地址列表（AddressList)，某些服务只会使用部分地址列表，而某些服务需要使用所有地址。因此判断是否AddressList是否全部加载就成为问题，Flag的引入，就可以解决此问题。</p>
+
+
+		
+		<a href="/blog/2013/12/08/cache-exp/" class="more-link">阅读全文&rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-08T14:55:00+08:00" pubdate data-updated="true">Dec 8<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+</div>
+	
+</div>
+</article>
 
 
     <article class="post">
